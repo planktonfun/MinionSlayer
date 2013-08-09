@@ -1,0 +1,64 @@
+body { 
+	margin:50px 0px;
+	padding:0px;
+	text-align:center;
+	background: url('images/bg_sky.png') repeat-x 0 -40px;
+}
+
+#container {
+	width:500px;
+	margin:0px auto;
+	text-align:left;
+}
+
+#logo {
+	margin-left:-160px;
+	float: left;
+}
+
+#content {
+	padding-top: 39px;
+}
+
+img {
+	width:auto;
+	margin: 0 0 1em;
+	height: 140px;
+}
+code{
+	margin:0;
+	padding:0;
+}
+
+h2 {
+	font-family: "Proxima Nova", Helvetica, Arial, sans-serif;
+	font-weight: 600;
+	font-size: 21pt;
+	padding-top:15px;
+	margin-bottom: 1.5em;
+}
+
+p,
+li {
+	font-family: Helvetica, Arial, sans-serif;
+	font-size: 12pt;
+	line-height:1.525;
+}
+p {
+	margin-bottom: 1.5em;
+}
+
+code {
+	font-size: 10pt;
+	padding:0;
+	margin:0;
+}
+
+a {
+	color: #236da6;
+	text-decoration: none;
+}
+a:hover {
+	color: #124d7b;
+	border-bottom: 1px dotted #124d7b;
+}
