@@ -29,22 +29,22 @@ var sql_statement = "SELECT * from users LIMIT 0,1";
 
 client.query( sql_statement, function( err, results ) {
   if (err) {
-    
-    mysql_query("
+
+    client.query("
     
     CREATE TABLE IF NOT EXISTS `users` (
       `id` bigint(21) NOT NULL AUTO_INCREMENT,
       `user_name` varchar(45) NOT NULL,
       `password` varchar(45) NOT NULL,
       PRIMARY KEY (`id`)
-    ) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=4 ;");
+    ) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=4 ;", false);
 
-    mysql_query("
+    client.query("
     INSERT INTO `users` (`id`, `user_name`, `password`) VALUES
     (1, 'paulo', '1'),
     (2, 'lester', '1'),
     (3, 'gab', '1'),
-    (4, 'cha', '1');");
+    (4, 'cha', '1');", false);
 
   }
 }
