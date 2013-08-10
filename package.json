@@ -1,0 +1,21 @@
+{
+  "name": "nodejs",
+  "version": "0.0.0",
+  "description": "ERROR: No README.md file found!",
+  "main": "app.js",
+  "dependencies": {
+    "browserify": "~1.16.1",
+    "express": "~3.0.0rc5",
+    "memcache": "~0.3.0",
+    "mysql": "~2.0.0-alpha3",
+    "socket.io": "~0.9.10",
+    "npm": "~1.1.63"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": "",
+  "author": "",
+  "license": "BSD"
+}

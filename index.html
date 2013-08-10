@@ -1,0 +1,252 @@
+<!--
+	Minion The Chacha Slayer v0.01
+	
+-->
+<html>
+<head>
+	<title>Minion The Chacha Slayer v0.01</title>
+	<!--[if IE]>
+		<script type="text/javascript" src="./libraries/HTML5_Compatability/excanvas.js"></script>
+	<![endif]-->
+	<script src="jquery.min.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+	<script type="text/javascript">		
+		var socket = io.connect(document.location.href);
+
+	    socket.on('init', function(data){ alert( data.hello ); });
+	    socket.on('re_get', function(data){ alert( data.re_name ); });
+	    socket.emit('get', { my: 'data', talk: 'chat_msg' });
+
+		function updateFPS() 
+		{	
+			curFPS = nfd;
+			nfd = 0;			
+		}
+
+		function onmouseover( context, f_x, f_y, width, height )
+		{
+			return collision( context, mousex - 10, mousey - 10, 1, 1, f_x, f_y, width, height );
+		}
+
+		function onmouseclick( context, f_x, f_y, width, height )
+		{
+			result = collision( context, mpcx - 10, mpcy - 10, 1, 1, f_x, f_y, width, height );
+			mpcx = 0;
+			mpcy = 0;
+			return result;
+		}
+
+		function collision( context, x1, y1, w1, h1, x2, y2, w2, h2 )
+		{
+			// detect collision
+			if( x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2 )
+			{
+				return true; // The objects are touching
+			}
+			else
+			{
+				return false;
+			}
+		}		
+
+		function button( context, f_x, f_y, width, height, msg )
+		{
+			context.beginPath();
+		    context.rect( f_x, f_y, width, height );
+		    context.lineWidth =1;
+		    
+		    // on hover change color
+		    if( onmouseover( context, f_x, f_y, width, height ) )
+		    {
+		    	context.strokeStyle = 'blue';
+		    }
+		    else
+		    {
+		    	context.strokeStyle = 'black';	
+		    }
+
+		    context.stroke();
+
+		    // when clicked
+		    if( onmouseclick( context, f_x, f_y, width, height ) )
+		    {
+		    	// check database and log in
+		    	context.fillText( 'loading...', f_x + width/3, f_y + height/1.5);		    	
+		    	
+		    }
+		    else
+		    {
+			    context.fillText( msg, f_x + width/3, f_y + height/1.5);
+			}
+
+		}
+
+  		function osc_line( width, c_x, c_y, time, duration )
+      	{
+			var nextX = width * Math.sin(time * 2 * Math.PI / duration) + c_x;		
+			line( ctx, nextX, c_y + 10, nextX, c_y );
+
+      	}
+
+		function line( context, f_x, f_y, t_x, t_y )
+		{					
+			context.beginPath();
+		    context.moveTo(f_x, f_y);
+		    context.lineTo(t_x, t_y);
+		    context.stroke();						
+		}
+
+		function text( context, msg, x, y )
+		{			
+			context.fillText( msg, x, y );			
+		}
+
+		function loop() 
+		{
+			var time = (new Date()).getTime() - startTime;
+
+			ctx.clearRect( 0, 0, canvas.width, canvas.height ); // clears the frame
+			
+			ctx.font = "bold 12px sans-serif";
+
+			text( ctx, "Time: " + time , 10, 60 );
+			text( ctx, "FPS: " + curFPS + " / " + fps + "(" + nfd + ")", 10, 80 );
+			text( ctx, "Mouse Position: x: " + mousex + " y: " + mousey , 10, 100 );		
+			text( ctx, "Minion The Chacha Slayer v0.01", 10, 120 ); osc_line( 50, 240, 110, time, 2000 );
+			text( ctx, "Login name: ", 10, 140 );
+			text( ctx, "Password: ", 10, 160 );		    
+		    button( ctx, 80, 180, 100, 20, 'Login' );
+
+		    for(var i = 0; i < NUM_PARTICLES; i++) {
+				particles[i].update();
+
+				ctx.beginPath();
+				ctx.moveTo(particles[i].x, particles[i].y);
+				ctx.lineTo(particles[i].x - particles[i].xvel,
+									 particles[i].y - particles[i].yvel);
+				ctx.stroke();
+				ctx.closePath();
+			}
+
+
+			// setTimeout( loop, 10 ); // uncomment to attain maximum frame per sec
+
+			++nfd; // frames loaded
+		}
+
+		function load() // load something inside
+		{
+			canvas = document.getElementById( "cv" );
+			ctx    = canvas.getContext( "2d" );
+
+			curFPS = 0;                    // frame per second
+			nfd    = 0;                    // number of frames drawn per loop
+			fps    = 100;                  // increase this to make loop faster				
+
+			rreq   = false;
+
+			mousex = 0;
+			mousey = 0;
+			mpcx   = 0;
+			mpcy   = 0;	
+
+			particles = [];
+			NUM_PARTICLES = 10;
+
+			function Particle() {	
+			this.x = Math.random() * canvas.width;
+			this.y = Math.random() * canvas.height;
+
+			this.xvel = Math.random() * 5 - 2.5;
+			this.yvel = Math.random() * 5 - 2.5;
+			}
+
+			Particle.prototype.update = function() {
+				this.x += this.xvel;
+				this.y += this.yvel;
+
+				this.yvel += 0.1;
+
+				if (this.x > canvas.width || this.x < 0) {
+					this.xvel = -this.xvel;
+				}
+
+				if (this.y > canvas.height || this.y < 0) {
+					this.yvel = -this.yvel;
+				}
+			}
+
+			for(var i = 0; i < NUM_PARTICLES; i++) {
+				particles[i] = new Particle();
+			}		
+
+			// mouse events
+			function mp(e)
+			{
+				mousex = e.clientX;
+				mousey = e.clientY;
+			}
+			
+			function mpc(e)
+			{
+				mpcx = e.clientX;
+				mpcy = e.clientY;
+			}
+
+			canvas.addEventListener( "click",     mpc, false );			
+			canvas.addEventListener( "mousemove", mp, false );
+			canvas.addEventListener('touchstart', mpc, false);
+			canvas.addEventListener('touchend', mpc, false);
+			canvas.addEventListener('touchmove', mp, false);					
+
+			startTime = (new Date()).getTime(); // get start time of canvas			
+
+			setInterval(updateFPS, 1000 ); // update curFPS info per second			
+			setInterval(loop, 1000 / fps); // start animation loop			
+		
+		}
+
+
+	</script>
+	<style>
+		canvas 
+		{
+			border:1px solid #444;
+		}
+
+		#container
+		{
+			position:relative;
+		}
+
+		#un
+		{
+			position: absolute; 
+			left: 82px; 
+			top: 124px; 
+			width: 158px;
+		}
+
+		#pw
+		{
+			position: absolute;
+			left: 82px;
+			top: 148px;
+			width: 158px;
+		}
+
+	</style>
+</head>
+<body onload="load();">
+
+<div id="container" >
+	<canvas id="cv" width="600" height="400"></canvas>
+	<form name="fLogin" method="get" action="verify.php" >    
+    <input type="text" id="un" name="un" />
+    <input type="password" id="pw" name="pw" />
+    <input type="submit" style="opacity:0" />
+	</form>
+</div>
+	
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+
+    ::-moz-selection {
+      background-color: purple;
+      color: #fff;
+    }
+
+    ::selection {
+        background-color: purple;
+        color: #fff;
+    }
+
+    .controls a {
+      border:solid 5px black;
+      height:30px;
+      width:30px;
+      padding:10px;
+    }
+
+  </style>
+</head>
+
+<body>
+<canvas id="canvas" width="1200" height="600"></canvas>
+<script type = "Javascript" src="jquery.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    
+    var socket = io.connect(document.location.href);
+
+    socket.emit('getnews', { my: data, talk: chat_msg });
+    socket.on('user connected', function(data){ alert( data.name ); });
+
+</script>
+</body>
+</html>
