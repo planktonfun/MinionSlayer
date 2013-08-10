@@ -7,10 +7,10 @@ var app = require('express')()
 
 // connect through mysql database
 
-/*var db_user = process.env.DB_USER || 'root';
+var db_user = process.env.DB_USER || 'root';
 var password = process.env.DB_PASSWORD || '';
 var host = process.env.DB_HOST || 'localhost';
-var db_name = process.env.DB_SLAVES || 'mcv';
+var db_name = process.env.DB_MASTER || 'mcv';
 var table_name = 'users';
 
 var client = mysql.createConnection({
@@ -20,35 +20,36 @@ var client = mysql.createConnection({
 });
 
 client.connect();
-client.query( 'USE ' + db_name );
+
+// client.query( 'USE ' + db_name );
 
 console.log( db_name );
 
 // create table if not exist
-var sql_statement = "SELECT * from users LIMIT 0,1";
+// var sql_statement = "SELECT * from users LIMIT 0,1";
 
-client.query( sql_statement, function( err, results ) {
-  if (err) {
+// client.query( sql_statement, function( err, results ) {
+//   if (err) {
 
-    client.query("
+//     client.query("
     
-    CREATE TABLE IF NOT EXISTS `users` (
-      `id` bigint(21) NOT NULL AUTO_INCREMENT,
-      `user_name` varchar(45) NOT NULL,
-      `password` varchar(45) NOT NULL,
-      PRIMARY KEY (`id`)
-    ) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=4 ;", false);
+//     CREATE TABLE IF NOT EXISTS `users` (
+//       `id` bigint(21) NOT NULL AUTO_INCREMENT,
+//       `user_name` varchar(45) NOT NULL,
+//       `password` varchar(45) NOT NULL,
+//       PRIMARY KEY (`id`)
+//     ) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=4 ;", false);
 
-    client.query("
-    INSERT INTO `users` (`id`, `user_name`, `password`) VALUES
-    (1, 'paulo', '1'),
-    (2, 'lester', '1'),
-    (3, 'gab', '1'),
-    (4, 'cha', '1');", false);
+//     client.query("
+//     INSERT INTO `users` (`id`, `user_name`, `password`) VALUES
+//     (1, 'paulo', '1'),
+//     (2, 'lester', '1'),
+//     (3, 'gab', '1'),
+//     (4, 'cha', '1');", false);
 
-  }
-}
-     */     
+//   }
+// }
+          
 
 
 // FILE BASED CONNECTION
@@ -92,15 +93,25 @@ var conn_user = [];
 var msgs = [];
 var stats = [];
 
-io.sockets.on('connection', function (socket) {  
-  
-  var items = "";
-  
-  for( item in process.env ) {
-    items += ";" + item + " = " + process.env[item] + "\n";
-  }
+io.sockets.on('connection', function (socket) { 
 
-  socket.emit('login_response', { msg: items });
+  var sql_statement = "SHOW DATABASES";
+  client.query( sql_statement, function(err, results) {          
+    if (err) { 
+      socket.emit('login_response', { msg: 'msg: sql error: ' + err });
+    } else if( results.length > 0 ) { 
+     console.log(results)
+      var items = "";
+  
+      for( item in results ) {
+        items += ";" + item + " = ";    
+           items += results[item]['Database'] + "\n";      
+      }
+
+      socket.emit('login_response', { msg: items });
+      
+    }
+  }); 
 
   var user = '';
 
