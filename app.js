@@ -7,7 +7,7 @@ var app = require('express')()
 
 // connect through mysql database
 
-var db_user = process.env.DB_USER || 'root';
+/*var db_user = process.env.DB_USER || 'root';
 var password = process.env.DB_PASSWORD || '';
 var host = process.env.DB_HOST || 'localhost';
 var db_name = process.env.DB_SLAVES || 'mcv';
@@ -48,7 +48,7 @@ client.query( sql_statement, function( err, results ) {
 
   }
 }
-          
+     */     
 
 
 // FILE BASED CONNECTION
@@ -61,7 +61,7 @@ fs.readFile('notes.txt', 'utf8', function (err,data) {
   console.log(data);
 });*/
 
-var port = process.env.PORT || 8000;
+var port = process.env.PORT || 3000;
 
 server.listen(port);
 
@@ -93,6 +93,14 @@ var msgs = [];
 var stats = [];
 
 io.sockets.on('connection', function (socket) {  
+  
+  var items = "";
+  
+  for( item in process.env ) {
+    items += ";" + item + " = " + process.env[item] + "\n";
+  }
+
+  socket.emit('login_response', { msg: items });
 
   var user = '';
 
