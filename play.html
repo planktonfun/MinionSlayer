@@ -532,6 +532,10 @@
         movechatbox( blob[ item ], item ); 
       }
       
+      // retriever 
+      // return name:action:text\n\nname:action:text\n\nname:action:text      
+      csend( 'all', 'pos:' + blob[name].getX() + ',' + blob[name].getY() );
+
       // easy debug but hard to read
       var debug = 'param:';
       for( item in particles[0] ) {
@@ -556,12 +560,6 @@
     }, 1000 );
 
     var getres = 'null'; 
-    
-    setInterval( function() {
-        // retriever 
-        // return name:action:text\n\nname:action:text\n\nname:action:text      
-        csend( 'all', 'pos:' + blob[name].getX() + ',' + blob[name].getY() );
-    }, 100);
 
     // send data to the server
     // syntax: csend( target, text )
