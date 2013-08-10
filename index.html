@@ -10,12 +10,22 @@
 	<![endif]-->
 	<script src="jquery.min.js"></script>
 	<script src="/socket.io/socket.io.js"></script>
+	<script type="text/javascript" src="http://l2.io/ip.js?var=myip"></script>
 	<script type="text/javascript">		
-		var socket = io.connect(document.location.href);
+		var socket = io.connect( 'http://' + document.location.host );	    	    	    
 
-	    socket.on('init', function(data){ alert( data.hello ); });
-	    socket.on('re_get', function(data){ alert( data.re_name ); });
-	    socket.emit('get', { my: 'data', talk: 'chat_msg' });
+		socket.on( 'login_response', function(e) { 
+			alert(e.msg); 
+		});
+		
+		socket.on( 'login', function(e){ 
+			location.href = "play.html"; 
+		});
+
+		function login() {
+			socket.emit('login', { un: document.getElementById('un').value , ps: document.getElementById('pw').value, myip: myip });
+			return false;
+		}
 
 		function updateFPS() 
 		{	
@@ -71,7 +81,8 @@
 		    if( onmouseclick( context, f_x, f_y, width, height ) )
 		    {
 		    	// check database and log in
-		    	context.fillText( 'loading...', f_x + width/3, f_y + height/1.5);		    	
+		    	context.fillText( 'loading...', f_x + width/3, f_y + height/1.5);
+		    	login();
 		    	
 		    }
 		    else
@@ -241,7 +252,7 @@
 
 <div id="container" >
 	<canvas id="cv" width="600" height="400"></canvas>
-	<form name="fLogin" method="get" action="verify.php" >    
+	<form name="fLogin" method="get" onsubmit="return login()" >    
     <input type="text" id="un" name="un" />
     <input type="password" id="pw" name="pw" />
     <input type="submit" style="opacity:0" />
