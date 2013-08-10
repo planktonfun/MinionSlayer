@@ -63,13 +63,13 @@ app.use('/', express.static(__dirname + "/"));
 // show default redirect here
 app.post('/', function (req, res){
   // console.log( req );
-  // res.sendfile(__dirname + '/index.html');
+  res.sendfile(__dirname + '/index.html');
 
 });
 
 app.get('/', function (req, res) {
   // console.log( req );
-  // res.sendfile(__dirname + '/index.html');
+  res.sendfile(__dirname + '/index.html');
 
 });
 
