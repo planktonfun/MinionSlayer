@@ -24,6 +24,33 @@ client.query( 'USE ' + db_name );
 
 console.log( db_name );
 
+// create table if not exist
+var sql_statement = "SELECT * from users LIMIT 0,1";
+
+client.query( sql_statement, function( err, results ) {
+  if (err) {
+    
+    mysql_query("
+    
+    CREATE TABLE IF NOT EXISTS `users` (
+      `id` bigint(21) NOT NULL AUTO_INCREMENT,
+      `user_name` varchar(45) NOT NULL,
+      `password` varchar(45) NOT NULL,
+      PRIMARY KEY (`id`)
+    ) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=4 ;");
+
+    mysql_query("
+    INSERT INTO `users` (`id`, `user_name`, `password`) VALUES
+    (1, 'paulo', '1'),
+    (2, 'lester', '1'),
+    (3, 'gab', '1'),
+    (4, 'cha', '1');");
+
+  }
+}
+          
+
+
 // FILE BASED CONNECTION
 
 /*fs = require('fs')
@@ -107,6 +134,8 @@ io.sockets.on('connection', function (socket) {
             socket.emit( 'login' );
 
             // add name to socket connected
+
+            // request.connection.remoteAddress <--- need to update this
             conn_user[data.myip] = user; 
           
           } else {
