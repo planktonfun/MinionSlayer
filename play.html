@@ -6,7 +6,7 @@
 <head>
 	<title>Minion The Chacha Slayer v0.01</title>
 	<!--[if IE]>
-		<script type="text/javascript" src="./libraries/HTML5_Compatability/excanvas.js"></script>
+		<script type="text/javascript" src="./libraries/excanvas.js"></script>
 	<![endif]-->
 	<script type="text/javascript" src="./libraries/kinetic-v4.5.4.min.js"></script>
 	<script src="jquery.min.js"></script>
@@ -72,7 +72,7 @@
 </div>
 <script type="text/javascript" src="http://l2.io/ip.js?var=myip"></script>
 <script type="text/javascript" defer="defer">
-  var socket = io.connect( 'http://' + document.location.host );                  
+  var socket = io.connect( 'http://' + document.location.host );                    
   var name = '';
 
   window.onerror = function( message, lineno, filename ) { 
@@ -563,17 +563,16 @@
 
     // send data to the server
     // syntax: csend( target, text )
-    // target can be "all", "playername", "them"
-    var cd = false;         
+    // target can be "all", "playername", "them"    
     function csend( target, action ) {  
       
-      socket.emit( 'message', target, { action: action } );
-      cp++; 
+      socket.emit( 'message', target, { action: action } );       
       getres = 'FrameRate: ' + frps + '<br>Latency: ' + pps + 'ms <br>Last key pressed: ' + last_key; 
       document.getElementById('messagecontainer').innerHTML = getres;          
     }
 
     function act( e ) {
+      cp++;
       if(e=='undefined') return;
       // split message by Lines
       var lines = e.split("\n\n");

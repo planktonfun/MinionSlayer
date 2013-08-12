@@ -540,7 +540,8 @@
         }
       }      
             
-      document.getElementById('debugcontainer').innerHTML = debug;      
+      document.getElementById('debugcontainer').innerHTML = debug;  
+      csend( 'all', 'pos:' + blob[name].getX() + ',' + blob[name].getY() );    
     }, Particlelayer);
 
     anim.start();
@@ -555,13 +556,7 @@
       cp = 0;
     }, 1000 );
 
-    var getres = 'null'; 
-    
-    setInterval( function() {
-        // retriever 
-        // return name:action:text\n\nname:action:text\n\nname:action:text      
-        csend( 'all', 'pos:' + blob[name].getX() + ',' + blob[name].getY() );
-    }, 100);
+    var getres = 'null';     
 
     // send data to the server
     // syntax: csend( target, text )
