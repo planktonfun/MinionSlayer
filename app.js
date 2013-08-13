@@ -1,216 +1,69 @@
 var app = require('express')()
-  , express = require('express')
   , server = require('http').createServer(app)
-  , io = require('socket.io').listen(server)
-  , mysql = require('mysql');
+  , io = require('socket.io').listen(server);
 
+server.listen(8080);
 
-// connect through mysql database
-
-var db_user = process.env.DB_USER || 'root';
-var password = process.env.DB_PASSWORD || '';
-var host = process.env.DB_HOST || 'localhost';
-var db_name = process.env.APP_NAME || 'mcv';
-var table_name = 'users';
-
-var client = mysql.createConnection({
-    host: host,
-    user: db_user,
-    password: password
-});
-
-client.connect();
-
-client.query( 'USE ' + db_name );
-
-console.log( db_name );
-
-// create table if not exist
-var sql_statement = "SELECT * from users LIMIT 0,1";
-
-client.query( sql_statement, function( err, results ) {
-  if (err) {
-
-    sql_statement = "CREATE TABLE IF NOT EXISTS `users` ( `id` bigint(21) NOT NULL AUTO_INCREMENT, `user_name` varchar(45) NOT NULL, `password` varchar(45) NOT NULL, PRIMARY KEY (`id`) ) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=4";
-    client.query( sql_statement, false);
-
-    sql_statement = " INSERT INTO `users` (`id`, `user_name`, `password`) VALUES (1, 'paulo', '1'), (2, 'lester', '1'), (3, 'gab', '1'), (4, 'cha', '1');";
-    client.query( sql_statement, false);
-
-  }
-  
-});
-          
-
-
-// FILE BASED CONNECTION
-
-/*fs = require('fs')
-fs.readFile('notes.txt', 'utf8', function (err,data) {
-  if (err) {
-    return console.log(err);
-  }
-  console.log(data);
-});*/
-
-var port = process.env.PORT || 3000;
-
-server.listen(port);
-
-// include folders here
-app.use('/', express.static(__dirname + "/"));
-
-// show default redirect here
-app.post('/', function (req, res){
-  // console.log( req );
-  res.sendfile(__dirname + '/index.html');
-
-});
-
+// routing
 app.get('/', function (req, res) {
-  // console.log( req );
-  res.sendfile(__dirname + '/index.html');
-
+  res.sendfile(__dirname + '/index.html');  
 });
 
-// io.configure(function () {
-//   io.set('transports', ['flashsocket', 'xhr-polling','websocket']);
+app.get('/app.css', function (req, res) {
+  res.sendfile(__dirname + '/app.css');  
+});
 
-// });
+// usernames which are currently connected to the chat
+var usernames = {};
 
-// user data containers
-var ip_user = [];
-var conn_user = [];
-var msgs = [];
-var stats = [];
+io.sockets.on('connection', function (socket) {
 
-io.sockets.on('connection', function (socket) { 
+// when the client emits 'sendchat', this listens and executes
+socket.on('sendchat', function (data) {
+// we tell the client to execute 'updatechat' with 2 parameters
+io.sockets.emit('updatechat', socket.username, data);
+});
 
-  /* ENGINE YARD DEBUG VARIABLES
-  var sql_statement = "SHOW DATABASES";
-  client.query( sql_statement, function(err, results) {          
-    if (err) { 
-      socket.emit('login_response', { msg: 'msg: sql error: ' + err });
-    } else if( results.length > 0 ) { 
-     console.log(results)
-      var items = "";
-  
-      for( item in results ) {
-        items += ";" + item + " = ";    
-           items += results[item]['Database'] + "\n";      
-      }
+// when the client emits 'opencmd', this listens and executes
+socket.on('opencmd', function (data) {
+// Add calls to IO here
+io.sockets.emit('opencmd', socket.username, data);
+setTimeout(function () {
+  io.sockets.emit('openvalve', socket.username, data);
+}, 1000)
+});
 
-      socket.emit('login_response', { msg: items });
+// when the client emits 'closecmd', this listens and executes
+socket.on('closecmd', function (data) {
+// Add calls to IO here
+io.sockets.emit('closecmd', socket.username, data);
+setTimeout(function () {
+  io.sockets.emit('closevalve', socket.username, data);
+}, 1000)
+});
 
-    }
-  }); 
+// when the client emits 'adduser', this listens and executes
+socket.on('adduser', function(username){
+// we store the username in the socket session for this client
+socket.username = username;
+// add the client's username to the global list
+usernames[username] = username;
+// echo to client they've connected
+socket.emit('updatechat', 'SERVER', 'you have connected');
+// echo globally (all clients) that a person has connected
+socket.broadcast.emit('updatechat', 'SERVER', username + ' has connected');
+// update the list of users in chat, client-side
+io.sockets.emit('updateusers', usernames);
+});
 
-  var items = "";
-  
-  for( item in process.env ) {
-    items += ";" + item + " = " + process.env[item] + "\n";
-  }
-
-  socket.emit('login_response', { msg: items });*/
-
-  var user = '';
-
-  socket.on('message', function ( from, msg ) {
-    //notify others that player is online
-    io.sockets.emit( 'message', { msg: user + ":add:" + user + "\n\n" } );
-
-    if( from == 'all' ) {
-      io.sockets.emit('message', { msg: user + ":" + msg.action + "\n\n" } );
-
-    } else if( from == 'them' ) {
-      socket.broadcast.emit('message', { msg: user + ":" + msg.action + "\n\n" });
-
-    } else if( from == 'self' || from == '' ) {
-      socket.emit('message', { msg: user + ":" + msg.action + "\n\n" });
-
-    } else {
-      socket.emit('message', from, { msg: user + ":" + msg.action + "\n\n" });
-
-    }
-
-
-    // console.log('I received a private message by ', from, ' saying ', msg);
-  });
-
-  socket.on( 'login', function( data ) {
-
-      // check username if it exist in the database
-      var sql_statement = "SELECT * FROM users WHERE user_name = '" + data.un  + "' AND password = '" + data.ps + "' LIMIT 0,1";
-
-      client.query( sql_statement, function(err, results) {          
-          if (err) { 
-            socket.emit('login_response', { msg: 'msg: sql error: ' + err });
-            // console.log( err );
-          
-          } else if( results.length > 0 ) {
-            user = results[0][ 'user_name' ];
-            // console.log( user );
-            socket.emit( 'login' );
-
-            // add name to socket connected
-
-            // request.connection.remoteAddress <--- need to update this
-            conn_user[data.myip] = user; 
-          
-          } else {
-            socket.emit('login_response', { msg: 'msg: Wrong username or password ' + err });
-          
-          }
-
-      });
-
-    });
-
-  socket.on( 'logon', function( data ) {
-    // console.log( 'recieved' );
-
-    if( conn_user[data.myip] != null ) {
-
-      user = conn_user[data.myip];
-
-      // add name to socket list
-      socket.set('username', user, function () {
-
-        // add name to socket connected
-        conn_user[user] = user;            
-
-        socket.emit('logon', { un: user });
-        // send to self 
-        socket.emit('message', { msg: 'msg: Welcome ' + user + '! ' });
-
-        // send to everyone but this user
-        socket.broadcast.emit('message', { msg: 'msg: User is connected: ' + user + '.' }); 
-
-        // send to all
-        //io.sockets.emit('message', { msg: 'hi everyone!' } );
-
-        // send to a user
-        //socket.emit('message', 'targetname', { msg: msg });
-
-      });
-
-    } else {
-        socket.emit( 'error', false );
-      
-    }
-
-  });
-
-  socket.on('disconnect', function(){ 
-    
-    socket.get('username', function (err, name) {
-
-      // remove name from the socket connected list
-      conn_user[user] = null;
-      socket.broadcast.emit('message', { msg: 'msg: User is disconnected ' + user + '.' });
-
-    });
-
-  });
+// when the user disconnects.. perform this
+socket.on('disconnect', function(){
+// remove the username from global usernames list
+delete usernames[socket.username];
+// update list of users in chat, client-side
+io.sockets.emit('updateusers', usernames);
+// echo globally that this client has left
+socket.broadcast.emit('updatechat', 'SERVER', socket.username + ' has disconnected');
+});
 
 });
