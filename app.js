@@ -73,10 +73,10 @@ app.get('/', function (req, res) {
 
 });
 
-io.configure(function () {
-  io.set('transports', ['flashsocket', 'xhr-polling','websocket']);
+// io.configure(function () {
+//   io.set('transports', ['flashsocket', 'xhr-polling','websocket']);
 
-});
+// });
 
 // user data containers
 var ip_user = [];
