@@ -1,18 +1,17 @@
-
 var port = process.env.PORT || 8080;
-var ip   = process.env.IP || '127.0.0.1';
+//var ip   = process.env.IP || '127.0.0.1';
 var net = require('net');
 
 console.log( port + ',' + ip ) ;
 
 var server = net.createServer( function ( socket ) {
 
-		socket.write( 'Echo server\r\n' );
+		socket.write( port + ',' + ip + ' Echo server\r\n' );
 		socket.pipe( socket );
 
 });
 
-server.listen( port, ip );
+server.listen( port );
 
 /*
 var app = require('express')()
