@@ -1,3 +1,20 @@
+
+var port = process.env.PORT || 8080;
+var ip   = process.env.IP || '127.0.0.1';
+var net = require('net');
+
+console.log( port + ',' + ip ) ;
+
+var server = net.createServer( function ( socket ) {
+
+		socket.write( 'Echo server\r\n' );
+		socket.pipe( socket );
+
+});
+
+server.listen( port, ip );
+
+/*
 var app = require('express')()
   , server = require('http').createServer(app)
   , io = require('socket.io').listen(server);
@@ -77,4 +94,4 @@ io.sockets.emit('updateusers', usernames);
 socket.broadcast.emit('updatechat', 'SERVER', socket.username + ' has disconnected');
 });
 
-});
+});*/
