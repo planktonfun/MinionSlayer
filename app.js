@@ -8,6 +8,8 @@ var port       = process.env.PORT        || 3000;
 var table_name = 'users';
 var conn_user  = [];
 var msgs       = [];
+var sendrates  = [];
+var srps  = [];
 
 // includes
 var app     = require( 'express' )( )
@@ -39,6 +41,36 @@ io.configure( function ( ) {
     io.set( 'transports', [ 'flashsocket', 'xhr-polling', 'websocket' ] );
 
 });
+
+
+// get sending rates
+function getSendingRate( ) {
+
+        var text = '';
+
+        for( item in conn_user ) {
+
+            text += ',' + conn_user[ item ] + '->' + srps[ item ];
+
+        }
+
+        return text;
+
+}
+
+function getSRatePerSec( ) {
+
+    for( item in conn_user ) {
+
+        srps[ item ] = sendrates[ item ];
+
+        sendrates[ item ] = 0;
+
+    }
+
+}
+
+setInterval( getSRatePerSec, 1000);
 
 
 // Operation when a user is connected
@@ -73,11 +105,17 @@ io.sockets.on( 'connection', function ( socket ) {
             SendToTarget( user + ":" + msg.action + "\n\n", from );
             // socket.emit('message', from, { msg: user + ":" + msg.action + "\n\n" } );
 
-        }        
+        }
+
+        SendToAll( user + ":" + 'msg: ' + getSendingRate( ) + "\n\n" );
+
+        sendrates[ user ]++;
 
     });
 
     socket.on( 'retrieve', function( ) {
+
+            sendrates[ user ]++;
 
             getMsgs( user );
 
@@ -86,8 +124,11 @@ io.sockets.on( 'connection', function ( socket ) {
     // Add players
     socket.on( 'logon', function( data ) {
       
-        user = data.name;      
-        conn_user[ user ] = data.name;        
+        user = data.name;
+
+        conn_user[ user ] = data.name;
+        sendrates[ user ] = 0;
+
         socket.emit( 'logon', { un: user } );
 
         socket.set( 'username', user, function () {
@@ -114,7 +155,7 @@ io.sockets.on( 'connection', function ( socket ) {
 
       });
 
-    });    
+    });   
 
     function getUsers( ) {
 
@@ -167,7 +208,7 @@ io.sockets.on( 'connection', function ( socket ) {
     }
 
     function getMsgs( user ) {
-
+        
         if( msgs[ user ] == '' ) return;
         
         socket.emit('retrieve', { msg: msgs[ user ] } );
