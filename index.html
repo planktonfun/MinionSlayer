@@ -123,10 +123,12 @@
 
   }
 
-  var loadall = function() {
-    
-    socket.on( 'message', function(e) {      
-      act( e.msg );
+  var loadall = function() {    
+
+    socket.on( 'retrieve', function(e) {      
+
+          act( e.msg );          
+
     });
 
 
@@ -1047,9 +1049,9 @@
 
         // retriever 
         // return name:action:text\n\nname:action:text\n\nname:action:text 
-        if( lpxy != blob[name].getX() + ',' + blob[name].getY() + ',' + blobangles[ name ] ) {
+        if( lpxy != blob[name].getX() + ',' + blob[name].getY() ) {
 
-          lpxy = blob[name].getX() + ',' + blob[name].getY() + ',' + blobangles[ name ];
+          lpxy = blob[name].getX() + ',' + blob[name].getY();
 
           csend( 'all', 'pos:' + blob[name].getX() + ',' + blob[name].getY() + ',' + blobangles[ name ] );
 
@@ -1085,7 +1087,7 @@
             
         document.getElementById('debugcontainer').innerHTML = debug;
 
-         
+        socket.emit( 'retrieve' );
 
     }, AnimationLayer);
 
@@ -1121,8 +1123,8 @@
 
             cp++;
 
-            if( e == 'undefined' ) return;
-            
+            if( e == undefined ) return;
+
 
             // split message by Lines
             var lines = e.split( "\n\n" );

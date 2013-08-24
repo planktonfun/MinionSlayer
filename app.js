@@ -50,28 +50,38 @@ io.sockets.on( 'connection', function ( socket ) {
     // message pool for players
     socket.on( 'message', function ( from, msg ) {
 
-        io.sockets.emit( 'message', { msg: user + ":add:" + user + "\n\n" } );
+        // io.sockets.emit( 'message', { msg: user + ":add:" + user + "\n\n" } );
+        SendToAll( user + ":add:" + user + "\n\n" );
 
         if( from == 'all' ) {
 
-            io.sockets.emit('message', { msg: user + ":" + msg.action + "\n\n" } );
+            SendToAll( user + ":" + msg.action + "\n\n" );
+            // io.sockets.emit('message', { msg: user + ":" + msg.action + "\n\n" } );
 
         } else if( from == 'them' ) {
 
-            socket.broadcast.emit('message', { msg: user + ":" + msg.action + "\n\n" } );
+            SendToThem( user + ":" + msg.action + "\n\n" );
+            // socket.broadcast.emit('message', { msg: user + ":" + msg.action + "\n\n" } );
 
         } else if( from == 'self' || from == '' ) {
 
-            socket.emit('message', { msg: user + ":" + msg.action + "\n\n" } );
+            SendToSelf( user + ":" + msg.action + "\n\n" );
+            // socket.emit('message', { msg: user + ":" + msg.action + "\n\n" } );
 
         } else {
 
-            socket.emit('message', from, { msg: user + ":" + msg.action + "\n\n" } );
+            SendToTarget( user + ":" + msg.action + "\n\n", from );
+            // socket.emit('message', from, { msg: user + ":" + msg.action + "\n\n" } );
 
-        }
+        }        
 
     });
 
+    socket.on( 'retrieve', function( ) {
+
+            getMsgs( user );
+
+    });
 
     // Add players
     socket.on( 'logon', function( data ) {
@@ -120,10 +130,52 @@ io.sockets.on( 'connection', function ( socket ) {
 
     }
 
-    function SendToAll( ) {
+    function SendToAll( data ) {
 
+        for( item in conn_user ) {
 
+            msgs[ item ] += data;
+
+        }
 
     }
+
+    function SendToThem( data ) {
+
+        for( item in conn_user ) {
+
+            if( user != item ) {
+
+                msgs[ item ] += data;
+
+            }
+
+        }
+
+    }
+
+    function SendToSelf( data ) {
+
+        msgs[ user ] += data;
+
+    }
+
+    function SendToTarget( data, target ) {
+
+        msgs[ target ] += data;
+
+    }
+
+    function getMsgs( user ) {
+
+        if( msgs[ user ] == '' ) return;
+        
+        socket.emit('retrieve', { msg: msgs[ user ] } );
+
+        msgs[ user ] = '';
+
+    }
+
+
 
 });
