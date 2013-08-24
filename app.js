@@ -1,3 +1,4 @@
+
 // Settings
 var db_user    = process.env.DB_USER     || 'root';
 var password   = process.env.DB_PASSWORD || '';
@@ -81,32 +82,32 @@ io.sockets.on( 'connection', function ( socket ) {
     // message pool for players
     socket.on( 'message', function ( from, msg ) {
 
-        // io.sockets.emit( 'message', { msg: user + ":add:" + user + "\n\n" } );
-        SendToAll( user + ":add:" + user + "\n\n" );
+        io.sockets.emit( 'retrieve', { msg: user + ":add:" + user + "\n\n" } );
+        // SendToAll( user + ":add:" + user + "\n\n" );
 
         if( from == 'all' ) {
 
-            SendToAll( user + ":" + msg.action + "\n\n" );
-            // io.sockets.emit('message', { msg: user + ":" + msg.action + "\n\n" } );
+            // SendToAll( user + ":" + msg.action + "\n\n" );
+            io.sockets.emit('retrieve', { msg: user + ":" + msg.action + "\n\n" } );
 
         } else if( from == 'them' ) {
 
-            SendToThem( user + ":" + msg.action + "\n\n" );
-            // socket.broadcast.emit('message', { msg: user + ":" + msg.action + "\n\n" } );
+            // SendToThem( user + ":" + msg.action + "\n\n" );
+            socket.broadcast.emit('retrieve', { msg: user + ":" + msg.action + "\n\n" } );
 
         } else if( from == 'self' || from == '' ) {
 
-            SendToSelf( user + ":" + msg.action + "\n\n" );
-            // socket.emit('message', { msg: user + ":" + msg.action + "\n\n" } );
+            // SendToSelf( user + ":" + msg.action + "\n\n" );
+            socket.emit('retrieve', { msg: user + ":" + msg.action + "\n\n" } );
 
         } else {
 
-            SendToTarget( user + ":" + msg.action + "\n\n", from );
-            // socket.emit('message', from, { msg: user + ":" + msg.action + "\n\n" } );
+            // SendToTarget( user + ":" + msg.action + "\n\n", from );
+            socket.emit('retrieve', from, { msg: user + ":" + msg.action + "\n\n" } );
 
         }
 
-        //SendToAll( user + ":" + 'msg: ' + getSendingRate( ) + "\n\n" );
+        // SendToAll( user + ":" + 'msg: ' + getSendingRate( ) + "\n\n" );
 
         sendrates[ user ]++;
 
@@ -116,7 +117,7 @@ io.sockets.on( 'connection', function ( socket ) {
 
             sendrates[ user ]++;
 
-            getMsgs( user );
+            // getMsgs( user );
 
     });
 
