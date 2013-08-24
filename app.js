@@ -1,4 +1,3 @@
-
 // Settings
 var db_user    = process.env.DB_USER     || 'root';
 var password   = process.env.DB_PASSWORD || '';
@@ -107,7 +106,7 @@ io.sockets.on( 'connection', function ( socket ) {
 
         }
 
-        SendToAll( user + ":" + 'msg: ' + getSendingRate( ) + "\n\n" );
+        //SendToAll( user + ":" + 'msg: ' + getSendingRate( ) + "\n\n" );
 
         sendrates[ user ]++;
 
