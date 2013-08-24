@@ -1,150 +1,1188 @@
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml"  dir="ltr">
-<meta http-equiv="X-UA-Compatible" content="IE=9" />
-<head><title>SCADA Valve Control Example</title>
-<meta name="viewport" content="initial-scale = 1.0,maximum-scale = 1.0" />
-<link type="text/css" rel="stylesheet" href="/app.css" media="all">
+<!--
+  Minion The Chacha Slayer v0.01
+  
+-->
+<html>
+<head>
+  <title>Minion The Chacha Slayer v0.01</title>
+  <!--[if IE]>
+    <script type="text/javascript" src="./libraries/excanvas.js"></script>
+  <![endif]-->
+  <script type="text/javascript" src="./libraries/kinetic-v4.5.4.min.js"></script>
+  <script src="jquery.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="functions.js"></script>
+  <style>
+      body {
+        margin: 0px;
+        padding: 0px;
+      }
+      /*#container {
+        background-color: #222;
+        display: inline-block;
+        width: 580px;
+        height: 202px;
+      }*/
+      #buttons {
+        position: absolute;
+        top: 5px;
+        left: 10px;        
+      }
+
+      #chat {
+        float:left;
+        /*position: absolute;*/
+        top: 257px;
+        left: 10px;       
+      }
+
+      #buttons input {
+        min-width: 71px;
+        min-height: 26px;
+      }
+      /* incase you wana add additional buttons */
+      #buttons > input {
+        padding: 5px;
+        display: block;
+        margin-top: 5px;
+      }
+
+      #error {
+        color:red;
+      }
+  </style>
 </head>
-<script src="/socket.io/socket.io.js"></script>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
-<script>
-var socket = io.connect('127.0.0.1:8080'); //set this to the ip address of your node.js server
+<body>
+<div style="float:left;" id="container" ></div>
+<div style="float:left;" id="score_container" ></div>
+<div style="float:left;" id="error" ></div>
+<div style="float:left;" id="messagecontainer" >null</div>
+<div style="float:left;" id="debugcontainer" >null</div>
+<div style="float:left;" id="scores" >null</div>
+<div style="clear:left;float:left;" id="chatcontainer" >
+ <pre>
+      Instructions:
 
-// on connection to server, ask for user's name with an anonymous callback
-socket.on('connect', function(){
-// call the server-side function 'adduser' and send one parameter (value of prompt)
-socket.emit('adduser', prompt("What's your name?"));
-});
+      WASD or arrowkeys to move.
+      Click mouse to Move.
 
-// listener, whenever the server emits 'updatechat', this updates the chat body
-socket.on('updatechat', function (username, data) {
-$('#conversation').append('<b>'+username + ':</b> ' + data + '<br>');
-});
+      Kill red dots using power ups.
+      Don't get the red dot to you.
+  </pre>
+</div>
+<div id="chat">
+  <input type="text" id="chatm" />
+  <input type="button" id="mmessage" value="message">
+</div>
+<script type="text/javascript" defer="defer">
 
-// listener, whenever the server emits 'updateusers', this updates the username list
-socket.on('updateusers', function(data) {
-$('#users').empty();
-$.each(data, function(key, value) {
-$('#users').append('<div>' + key + '</div>');
-});
-});
+  var socket = io.connect( );                    
+  var name = '';
 
-// listener, whenever the server emits 'updateusers', this updates the username list
-socket.on('updatevalve', function(data) {
-$('#users').empty();
-$.each(data, function(key, value) {
-$('#users').append('<div>' + key + '</div>');
-});
-});
+  window.onerror = function( message, lineno, filename ) { 
+    document.getElementById('error').textContent = [
+      'ERROR: Line ', lineno, ' in ', filename, ': ', message
+    ].join('');
+    
+  };
+  
+  window.onload = function() {
 
-// listener, whenever the server emits 'openvalve', this updates the username list
-socket.on('openvalve', function(username, data) {
-$('#' + data + ' > div.feedback > div.circle.status').removeClass('red').addClass('green');
-});
-socket.on('opencmd', function(username, data) {
-$('#' + data + ' > div.feedback > div.circle.status > div.circle.command').removeClass('red').addClass('green');
-});
+    // var person = prompt( "Please enter your name", "Jhonny Depp" + Math.random( ) );
+    var person = "Jhonny Depp" + Math.random( );
 
-// listener, whenever the server emits 'openvalve', this updates the username list
-socket.on('closevalve', function(username, data) {
-$('#' + data + ' > div.feedback > div.circle.status').removeClass('green').addClass('red');
-});
-socket.on('closecmd', function(username, data) {
-$('#' + data + ' > div.feedback > div.circle.status > div.circle.command').removeClass('green').addClass('red');
-});
-// on load of page
-$(function(){
-// when the client clicks SEND
-$('#datasend').click( function() {
-var message = $('#data').val();
-$('#data').val('');
-// tell server to execute 'sendchat' and send along one parameter
-socket.emit('sendchat', message);
-});
+    if ( person != null ) {
 
-// when the client hits ENTER on their keyboard
-$('#data').keypress(function(e) {
-if(e.which == 13) {
-$(this).blur();
-$('#datasend').focus().click();
-}
-});
+        socket.emit( 'logon', { name: person });      
 
-// when the client clicks OPEN
-$('.open').click( function() {
-var id = $(this).parent().attr("id");;
-//console.log(id);
-socket.emit('opencmd', id);
-});
+    } else {
 
-// when the client clicks CLOSE
-$('.close').click( function() {
-var id = $(this).parent().attr("id");;
-//console.log(id);
-socket.emit('closecmd', id);
-});
+        location.href = location.href;
 
-});
+    }
+
+    socket.on( 'scores', function( e ) {
+        
+        document.getElementById('scores').textContent = e.score;
+
+    });
+
+    socket.on( 'logon', function( e ) {
+
+        name = e.un;
+        loadall( );
+
+    });
+
+    socket.on( 'error', function(){
+
+        console.log( 'error' ); 
+        location.href = location.href;
+
+    });
+
+  }
+
+  var loadall = function() {
+    
+    socket.on( 'message', function(e) {      
+      act( e.msg );
+    });
+
+
+    // create the stage animations
+    var stage = new Kinetic.Stage({
+      container: 'container',
+      width: 600,
+      height: 400
+    });
+
+
+    // create the stage for scores
+    var score_stage = new Kinetic.Stage({
+      container: 'score_container',
+      width: 400,
+      height: 400
+    });
+
+
+    // characters container
+    var blob        = []; // sprite image and position
+    var blobname    = []; // name under character
+    var names       = []; // player names
+    var chatboxText = []; // inside chat box
+    var chatbox     = []; // chat box  
+    var blobangles  = []; // angle position of a blob
+    var scoretip    = []; // scores container
+
+
+    // Layers to add
+    var ScoreLayer = new Kinetic.Layer();
+    var scorestack = 50;
+
+
+    // tooltip
+    var title = new Kinetic.Label({
+      x: 40,
+      y: scorestack
+    });
+
+    title.add(new Kinetic.Tag({
+        
+        fill: 'grey',
+        pointerDirection: 'down',
+        pointerWidth: 20,
+        pointerHeight: 15,
+        lineJoin: 'round',
+        shadowColor: 'black',
+        shadowBlur: 10,
+        shadowOffset: 10,
+        shadowOpacity: 0.5
+
+    }));
+    
+    title.add(new Kinetic.Text({
+
+        text: 'Scores',        
+        fontSize: 20,
+        padding: 5,
+        fill: 'white'
+
+    }));
+
+    ScoreLayer.add( title );
+    
+    function AddScore( player ) {
+
+        scorestack += 30;
+
+        scoretip[ player ] = new Kinetic.Label({
+
+            x: 0,
+            y: scorestack
+
+        });
+
+        scoretip[ player ].add(new Kinetic.Tag({
+            
+            fill: 'black',
+            pointerDirection: 'left',
+            pointerWidth: 20,
+            pointerHeight: 28,
+            lineJoin: 'round',
+            shadowColor: 'black',
+            shadowBlur: 10,
+            shadowOffset: 10,
+            shadowOpacity: 0.5
+
+        }));
+        
+        scoretip[ player ].add(new Kinetic.Text({
+
+            text: player,        
+            fontSize: 18,
+            padding: 5,
+            fill: 'white'
+
+        }));        
+
+        ScoreLayer.add( scoretip[ player ] );
+
+    }
+
+
+    // breath animation     
+    var breathDir = 1;
+    var breathAmt = 0;    
+
+    function updateBreath( ) { 
+        
+        if (breathDir === 1) {  
+            
+
+            // breath in        
+            breathAmt -= 0.09;
+            
+            if ( breathAmt < -0.5 ) {
+
+                breathDir = -1;
+
+            }
+
+        } else {
+
+
+            // breath out
+            breathAmt += 0.09;
+            
+            if( breathAmt > 0.5 ) {
+
+                breathDir = 1;
+
+            }
+
+        }
+
+    }
+
+
+    // layers to contain things  
+    var AnimationLayer = new Kinetic.Layer();
+    var BackgroundLayer = new Kinetic.Layer();
+
+    function addUser( nchar ) {
+
+      // check if it exist, if not add player    
+      if( names[ nchar ] != nchar ) {
+
+        //add player
+        names[ nchar ] = nchar; 
+        blobangles[ nchar ] = 0;
+
+
+        // image    
+        var imageObj = new Image( );
+
+        imageObj.src = './images/player.png';           
+
+        blob[ nchar ] = new Kinetic.Image({
+            x: Math.random() * stage.getWidth(),
+            y: Math.random() * stage.getHeight(),
+            image: imageObj,
+            width: 20,
+            height: 10,            
+            offset: [ 10, 5 ],
+            name: nchar 
+        });         
+
+
+        // add the shape to the layer
+        AnimationLayer.add(blob[ nchar ]);            
+
+        blobname[ nchar ] = new Kinetic.Label({
+
+            x: blob[nchar].getX(),
+            y: blob[nchar].getY() + blob[nchar].getHeight() + 90,
+
+        });
+
+        blobname[ nchar ].add(new Kinetic.Tag({
+            
+            fill: 'white',
+            pointerDirection: 'up',
+            pointerWidth: 20,
+            pointerHeight: 15,            
+
+        }));
+
+        blobname[ nchar ].add(new Kinetic.Text({
+            
+            x: blob[nchar].getX(),
+            y: blob[nchar].getY(),
+            text: nchar,
+            fontSize: 15,            
+            fontFamily: 'Calibri',
+            fill: 'black'
+
+        }));
+
+
+        // name under your character  
+        AnimationLayer.add(blobname[nchar]);
+
+
+        // bubble chat text        
+        chatboxText[ nchar ] = new Kinetic.Label({
+
+            x: blob[nchar].getX(),
+            y: blob[nchar].getY()
+
+        });
+
+        chatboxText[ nchar ].add(new Kinetic.Tag({
+            
+            fill: 'lightgrey',
+            pointerDirection: 'down',
+            pointerWidth: 20,
+            pointerHeight: 15,
+            lineJoin: 'round',
+            shadowColor: 'black',
+            shadowBlur: 10,
+            shadowOffset: 10,
+            shadowOpacity: 0.5
+
+        }));
+        
+        chatboxText[ nchar ].add(new Kinetic.Text({
+
+            text: 'chat box',
+            fontSize: 11,
+            fontFamily: 'Calibri',
+            fill: 'black',
+            width: 100,
+            padding: 10,
+            align: 'center'
+
+        }));
+        
+
+        hidechatbox( nchar );
+
+        // add the chatbox to the layer        
+        AnimationLayer.add(chatboxText[nchar]);
+
+        AddScore( nchar );            
+
+      }
+
+    }
+    
+    addUser( name );    
+  
+    function speak( )
+    {
+        var message = document.getElementById('chatm').value;
+        document.getElementById('chatm').value = '';
+        showchatbox( message, name );
+        csend( 'them', 'msg:' + message + ';' + new Date().getTime( ) );
+    }
+    
+    // chat button
+    document.getElementById('mmessage').addEventListener('click', function () {
+
+        speak( );
+
+    }, false);
+
+    
+    // Controls via keyboard 
+    document.onkeydown = checkKey;
+    document.onkeyup = checkKey_u;
+
+
+    // Controls via mouse
+    var mouse = Mouse({ });
+    document.addEventListener( 'click',      mouse.updateClick, false );     
+    document.addEventListener( 'mousemove',  mouse.updatePos, false );
+    document.addEventListener( 'touchstart', mouse.updateTouchClick, false);
+    document.addEventListener( 'touchend',   mouse.updateTouchClick, false);
+    document.addEventListener( 'touchmove',  mouse.updateTouchPos, false);  
+
+    var left_button = false;
+    var right_button = false;
+    var up_button = false;
+    var down_button = false;
+    var last_key = null;
+    var cf = false;    
+
+    function Mouse( options ) {
+
+        var that = {};
+              
+        that.posx = options.posx || 0;
+        that.posy = options.posy || 0;
+        that.clickx = options.clickx || 0;
+        that.clicky = options.clicky || 0;
+        that.clicked = options.clicked || false;
+        that.distance = options.distance || 0;
+
+        that.updatePos = function( e ) {
+
+            that.posx = e.clientX;
+            that.posy = e.clientY;
+            AnimationLayer.batchDraw();
+
+        }
+
+        that.updateTouchPos = function( e ) {
+
+            that.posx = e.changedTouches[0].pageX;
+            that.posy = e.changedTouches[0].pageY;
+            AnimationLayer.batchDraw();
+
+        }
+
+        that.updateTouchClick = function( e ) {
+
+            that.clickx = e.changedTouches[0].pageX;
+            that.clicky = e.changedTouches[0].pageY;
+            that.clicked = !that.clicked;
+
+        }
+
+        that.updateClick = function( e ) {
+
+            that.clickx = e.clientX;
+            that.clicky = e.clientY;
+            that.clicked = !that.clicked;           
+
+        }
+
+        that.getdistance = function( e ) {
+
+            var yDiff = e.getY( ) - mouse.posy;
+            var xDiff = e.getX( ) - mouse.posx;            
+            that.distance = Math.sqrt( ( yDiff * yDiff ) + ( xDiff * xDiff ) );
+
+        }            
+
+        return that;
+    
+    }
+
+    function checkKey(e) 
+    {
+      e = e || window.event;
+      last_key = e.keyCode;
+      //space
+      if(e.keyCode=='13')
+      {
+          cf = !cf;
+          if(cf) {          
+            document.getElementById('chatm').focus();          
+          }
+          else {
+            speak( );
+            document.getElementById('chatm').blur();
+          }
+      }
+      
+      if( !cf ) //if not in message input field
+      { 
+        if(e.keyCode=='32')
+        {
+            jump( blob[name] );  //code
+        }       
+        else if(e.keyCode=='37' || e.keyCode=='65')
+        {
+            left_button = true;
+        }
+        else if(e.keyCode=='39' || e.keyCode=='68')
+        {
+            right_button = true;
+        }
+        else if(e.keyCode=='87' || e.keyCode=='38')
+        {
+            up_button = true;
+        }
+        else if(e.keyCode=='83' || e.keyCode=='40')
+        {
+            down_button = true;
+        }
+      }   
+
+    }
+
+    function checkKey_u(e) 
+    {
+      e = e || window.event;
+
+      if(e.keyCode=='37' || e.keyCode=='65')
+      {
+          left_button = false;
+      }
+      else if(e.keyCode=='39' || e.keyCode=='68')
+      {
+          right_button = false;
+      }
+      else if(e.keyCode=='87' || e.keyCode=='38')
+      {
+          up_button = false;
+      }
+      else if(e.keyCode=='83' || e.keyCode=='40')
+      {
+          down_button = false;
+      }
+      
+    }  
+
+    function movechatbox( mcharacter, mchar ) {
+      chatboxText[ mchar ].setX( mcharacter.getX() );      
+      chatboxText[ mchar ].setY( mcharacter.getY() );      
+    }
+
+    function hidechatbox( mchar ) {
+      chatboxText[ mchar ].getText().setText( '' );
+      chatboxText[ mchar ].hide();      
+    }    
+
+    function showchatbox( message, mchar ) {  
+      addChatC( mchar, message );  
+      chatboxText[ mchar ].getText().setText( message );
+      chatboxText[ mchar ].show();      
+      setTimeout( function(){ hidechatbox( mchar ) }, 750 );
+    }  
+
+    var amplitude = 150;
+    var period = 2000;
+    // in ms
+    var centerX = stage.getWidth() / 2;
+
+    var enemies = [];    
+    var max_enemy = 10;
+
+    function addEnemy() {
+
+        var i = enemies.length;
+
+        // max limit
+        if( i >= max_enemy ) {
+
+            return;
+
+        }
+
+        enemies[ i ] = Enemy({ 
+
+            x: stage.getWidth() * Math.random(), 
+            y: stage.getHeight() * Math.random(),
+            name: i            
+
+        });
+        
+        AnimationLayer.add( enemies[ i ].body );
+
+    }
+
+
+    // Function for creating particles object
+    function createParticles(x, y, m) {
+        
+        this.active = true;
+        this.x = x || 0;
+        this.y = y || 0;
+        
+        this.radius = 1.2;
+        
+        this.vx = -1.5 + Math.random()*3;
+        this.vy = m * Math.random()*1.5;
+
+    }
+
+    var particles = [];
+
+    // Function for emitting spark
+    function emitParticles() { 
+      for(var j = 0; j < particles.length; j++) {      
+        par = particles[j];
+        
+        var ctx = BackgroundLayer.getContext();
+
+        ctx.beginPath(); 
+        ctx.fillStyle = "red";
+        if (par.radius > 0) {
+            
+            ctx.arc( par.x, par.y, par.radius, 0, Math.PI * 2, false );
+
+        } else {
+
+            BackgroundLayer.clear();
+
+        }
+
+        ctx.fill();  
+        
+        par.x += par.vx; 
+        par.y += par.vy; 
+        
+        // Reduce radius so that the particles die after a few seconds
+        par.radius = Math.max(par.radius - 0.05, 0.0); 
+        
+      } 
+    }
+
+    function Enemy( options ) {
+
+        // make an update, render and collision handler, active and inactive
+
+        var that = {};        
+              
+        that.x      = options.x || 0;
+        that.y      = options.y || 0;
+        that.width  = options.width || 4;
+        that.height = options.height || 4;
+        that.radius = ( that.width + that.height ) / 2;
+        that.speed  = options.speed || 1;
+        that.speedx  = that.speed;
+        that.speedy  = that.speed;
+        that.name   = options.name || 0;
+        that.color  = options.color || 'red';        
+
+        that.vol = 0;
+        that.nextX = 0;
+        that.nextY = 0;
+        that.xlc = false;
+        that.xcc = false;
+        that.ylc = false;
+        that.ycc = false;
+        that.colltarget = false;
+
+        that.body = new Kinetic.Circle({
+
+            x: that.x,
+            y: that.y,
+            radius: that.radius,
+            fill: that.color
+
+        });
+
+
+        that.handleCollision = function( ) {
+            
+            var collision = false;
+
+            for( item in enemies ) {
+                
+                if( enemies[ item ].name != that.name ) {
+
+                    if( that.collideWith( enemies[ item ].body, Math.random( ) * 5 ) ) {
+
+                        collision = true;                      
+
+                    }  
+
+                }
+
+            }            
+
+            if( collision ) {
+
+                that.speedx = ( that.speedx + 0.01 ) * -1;
+                that.speedy = ( that.speedy + 0.01 ) * -1;
+                that.x = that.lastx;
+                that.y = that.lasty;                
+
+            } else {                
+
+                return;
+
+            }
+
+        }
+
+        that.collideWith = function( mchar, dis ) {
+
+            if( dis > 0 ) {
+
+                add = dis;
+
+            } else {
+
+                add = 0;  
+
+            }
+
+            var yDiff = mchar.getY( ) - that.y;
+            var xDiff = mchar.getX( ) - that.x;            
+            var distance = Math.sqrt( ( yDiff * yDiff ) + ( xDiff * xDiff ) );          
+            var vol = ( ( mchar.getWidth( ) + that.width ) / 2 );
+
+            if( ( distance - add ) <= vol ) {
+
+                return true;
+
+            } else {
+                
+                return false;
+
+            }          
+
+        }
+
+        that.bounceOnWalls = function ( ) {
+            
+            that.nextX  = that.x + that.speedx;
+            that.nextY  = that.y + that.speedy;
+
+            if ( ( that.nextX + that.radius ) > stage.getWidth( ) ) {         // right wall
+                
+                if( that.xlc == that.xcc ) { 
+
+                    that.speedx = that.speedx * (-1);
+                    that.nextX  = stage.getWidth( ) - that.radius;
+                    that.xcc = !that.xcc;
+                    setParticles( that.x, that.y, 1 );
+                }
+
+            } else if ( that.nextX - that.radius < 0 ) {                       // top wall
+
+                if( that.xlc == that.xcc ) { 
+
+                    that.speedx = that.speedx * (-1);
+                    that.nextX  = that.radius;
+                    that.xcc = !that.xcc;
+                    setParticles( that.x, that.y, 1 );
+                }
+
+            } else {
+
+                that.xlc = that.xcc;
+
+            }
+
+            if ( ( that.nextY + that.radius ) > stage.getHeight( ) ) {       // bottom wall
+
+                if( that.ylc == that.ycc ) { 
+
+                    that.speedy = that.speedy * (-1);
+                    that.nextY  = stage.getHeight( ) - that.radius;
+                    that.ycc = !that.ycc;
+                    setParticles( that.x, that.y, 1 );
+                }
+
+            } else if ( ( that.nextY - that.radius ) < 0 ) {                   // left wall
+
+                if( that.ylc == that.ycc ) { 
+                    
+                    that.speedy = that.speedy * (-1);
+                    that.nextY  = that.radius;
+                    that.ycc = !that.ycc;
+                    setParticles( that.x, that.y, 1 );
+                }                
+
+            } else {
+
+                that.ylc = that.ycc;
+
+            }
+
+        }
+
+        that.update = function( mchar ) {                      
+
+            that.lastx = that.x; 
+            that.lasty = that.y;
+
+
+            // move enemy to character
+            if( that.following ) {
+                  
+                  that.x += that.speedx;
+                  that.y += that.speedy;
+
+                // if near enemy
+                if( that.collideWith( mchar, 100 ) && mchar.getVisible( ) == true ) {
+
+                    if( that.x > ( mchar.getX( ) + that.speedx ) ) {
+                                            
+                        that.x = that.lastx + -( that.speed * 1.2 );
+
+                    }
+                      
+                    if( that.x < ( mchar.getX( ) - that.speedx ) ) {
+                        
+                        that.x = that.lastx + ( that.speed * 1.2 );
+                      
+                    }
+
+                    if( that.y > ( mchar.getY( ) + that.speedy ) ) {
+                        
+                        that.y = that.lasty +  -( that.speed * 1.2 );
+                      
+                    }
+
+                    if( that.y < ( mchar.getY( ) - that.speedy ) ) {
+                                        
+                        that.y = that.lasty + ( that.speed * 1.2 );
+
+                    }
+
+                    that.color = 'black';
+
+                } else {
+
+                    that.color = 'red';
+
+                }
+
+            }
+
+        };
+
+        that.render = function( ) {
+
+            that.body.setX( that.x );
+            that.body.setY( that.y );
+            that.body.setFill( that.color );
+
+            // updateBreath( );
+            // that.body.setRadius( that.body.getRadius( ) + ( breathAmt * 1 ) );
+
+        };
+
+        that.follow = function( mchar ) {
+
+            that.update( mchar );
+            that.handleCollision( );
+            that.bounceOnWalls( );
+            that.render( );
+            
+            if( that.collideWith( mchar ) && mchar.getVisible( ) == true ) {
+                   
+                gameOver( mchar );
+
+                that.following = false;
+
+            } else {
+                
+                that.following = true;
+
+            }
+
+
+        };
+
+        return that;
+
+    }
+
+    var respawn = [];
+
+    function gameOver( mchar ) {
+
+        setParticles( mchar.getX( ), mchar.getY( ), 1 );
+
+        mchar.hide( );
+
+        respawn[ mchar.getName() ] = 5;
+
+        var rt = setInterval( function( ){
+
+            if( respawn[ mchar.getName() ] > 0 ) {
+
+                respawn[ mchar.getName() ] -= 1;
+
+                scoretip[ mchar.getName( ) ].getTag().setFill( 'red' );                
+                scoretip[ mchar.getName( ) ].getText().setText( 'Respawn in:' + respawn[ mchar.getName() ] );
+
+                if( respawn[ mchar.getName() ] <= 0 ) {
+
+                    mchar.show( );
+                    clearInterval( rt );
+
+                    scoretip[ mchar.getName( ) ].getTag().setFill( 'black' );                    
+                    scoretip[ mchar.getName( ) ].getText().setText( mchar.getName( ) );
+
+                }
+
+            }
+
+        }, 1000 );
+
+    }
+
+    setInterval( addEnemy, 1000 );    
+    
+
+    // Add image here for the background
+
+
+    // add the layer to the stage  
+    stage.add(BackgroundLayer);  
+    stage.add(AnimationLayer);
+    score_stage.add( ScoreLayer );
+
+    var time  = 0,
+        timeDiff  = 0,
+        frameRate = 0,
+        frps = 0;    
+    
+
+    // Animation Loop
+    var lpxy = 0;
+    var speed = 3;
+
+    // var sub_name = fetch_random( names );
+
+    // setInterval( function( ) { 
+
+    //     sub_name = fetch_random( names );        
+
+    // }, 10000);
+
+    function setParticles( x, y, m ) { 
+
+        // spark animation
+        for(var k = 0; k < 10; k++) {
+            
+            particles.push( new createParticles( x, y, m ) );
+
+        }
+        
+    }
+
+    setParticles( stage.getWidth() + 10, stage.getHeight() + 10, 1 );
+
+
+    // update score canvas
+    var updatescore = new Kinetic.Animation( function (frame) { 
+
+    }, ScoreLayer );
+
+    updatescore.start();
+
+    var anim = new Kinetic.Animation(function (frame) {                
+
+        // Emit particles/sparks
+        emitParticles( );
+
+        time = frame.time,
+        timeDiff = frame.timeDiff,
+        frameRate = frame.frameRate;
+
+        // enemies move to players
+        for( item in enemies ) {            
+
+            enemies[ item ].follow( blob[ name ] );
+
+        }          
+
+
+        // get angle from center of an image
+        var targetX = mouse.posx - blob[ name ].getX();
+        var targetY = mouse.posy - blob[ name ].getY();
+        var angle = Math.atan2( targetY, targetX ) * 180 / Math.PI;         
+        if(angle < 0) { angle = 360 + angle; }
+        blobangles[ name ] = angle;
+
+
+        // point image to direction
+        blob[ name ].setRotationDeg ( angle );
+
+
+        // move image to coordinates of click
+        if( mouse.clicked ) {            
+            
+
+            // if mouse is inside canvas
+            // move character to mouse position
+            if ( ( mouse.posx < stage.getWidth( ) ) && ( mouse.posy < stage.getHeight( ) ) ) {
+
+                if( blob[ name ].getX( ) > ( mouse.posx + speed ) ) {
+
+                    left( blob[ name ], speed );
+
+                }
+                  
+                if( blob[ name ].getX( ) < ( mouse.posx - speed ) ) {
+                    
+                    right( blob[name], speed );
+
+                }
+
+                if( blob[ name ].getY( ) > ( mouse.posy + speed ) ) {
+
+                    up( blob[name], speed );
+                  
+                }
+
+                if( blob[ name ].getY( ) < ( mouse.posy - speed ) ) {
+
+                    down( blob[name], speed );
+
+                }
+
+            }
+
+        }
+               
+        if( left_button ) left( blob[ name ], speed );
+        if( right_button ) right( blob[ name ], speed );
+        if( up_button ) up( blob[ name ], speed );
+        if( down_button ) down( blob[ name ], speed );            
+
+        for( item in names ) {
+                          
+            blobname[ item ].setX(blob[item].getX());
+            blobname[ item ].setY(blob[item].getY() + blob[item].getHeight() );
+
+        }
+
+        for( item in names ) {
+
+            movechatbox( blob[ item ], item );
+
+        }
+
+
+        // retriever 
+        // return name:action:text\n\nname:action:text\n\nname:action:text 
+        if( lpxy != blob[name].getX() + ',' + blob[name].getY() + ',' + blobangles[ name ] ) {
+
+          lpxy = blob[name].getX() + ',' + blob[name].getY() + ',' + blobangles[ name ];
+
+          csend( 'all', 'pos:' + blob[name].getX() + ',' + blob[name].getY() + ',' + blobangles[ name ] );
+
+
+          // add speed when character is moving
+          speed += 0.01;
+
+        } else {
+
+
+          // if character is steady reset speed          
+          speed = 3;
+
+        }
+
+        // easy debug but hard to read
+        var debug = 'param:';
+
+        debug += '<br> char visibility:' + blob[name].getVisible( );
+        debug += '<br> respawn time:' + respawn;
+        debug += '<br> score stack:' + scorestack;
+        debug += '<br> blob name:' + blob[ name ].getName( );
+
+        for( item in scoretip ) {
+
+            if( !isFunction( scoretip[ item ] ) ) {
+
+                debug += '<br> ' + item + ':' + scoretip[ item ];
+
+            }
+
+        }      
+            
+        document.getElementById('debugcontainer').innerHTML = debug;
+
+         
+
+    }, AnimationLayer);
+
+    anim.start();
+    
+    // reciever
+    var cp    = 0;
+    var pps   = 0
+
+    setInterval( function() { 
+            
+            pps  = cp;
+            frps = frameRate.toFixed( 2 );
+            cp   = 0;
+
+    }, 1000 );
+
+    var getres = 'null'; 
+
+
+    // send data to the server
+    // syntax: csend( target, text )
+    // target can be "all", "playername", "them"    
+    function csend( target, action ) {  
+      
+            socket.emit( 'message', target, { action: action } );       
+            getres = 'FrameRate: ' + frps + '<br>Latency: ' + pps + 'ms <br>Last key pressed: ' + last_key; 
+            document.getElementById('messagecontainer').innerHTML = getres; 
+
+    }
+
+    function act( e ) {
+
+            cp++;
+
+            if( e == 'undefined' ) return;
+            
+
+            // split message by Lines
+            var lines = e.split( "\n\n" );
+
+            for( var i = 0; i < lines.length; i++ ) {
+                    
+                    if( lines[i]=='' ) { 
+                    
+                            continue;
+                    
+                    }
+
+                    var colons = lines[ i ].split( ":" ); // split message by colons
+                    var user   = colons[ 0 ];
+                    var action = colons[ 1 ];
+                    var data   = colons[ 2 ];
+
+                    if( action == 'stat' ) {
+
+                            alert( data );
+
+                    } else if( action == 'msg' ) {
+
+                    if( user != name ) { 
+
+                            var cpos  = data.split( ";" );
+                            var delay = ( new Date( ).getTime( ) - ( cpos[ 1 ] * 1 ) ) / 1000;
+                            
+                            showchatbox( cpos[ 0 ] + ' delay:' + delay, user );
+
+                    }
+
+                    } else if ( action == 'add' ) {
+
+                            addUser( data );
+
+                    } else if ( action == 'pos' ) {
+
+
+                            // move everyone but yourself ( to not cause any control trouble)
+                            var cpos = data.split(",");
+
+                            if( user != name ) {  
+
+
+                                    // set players position         
+                                    blob[ user ].setX( cpos[0] * 1 );
+                                    blob[ user ].setY( cpos[1] * 1 );
+                                    blob[ user ].setRotationDeg ( cpos[2] * 1 ); 
+
+                            }
+
+                    } 
+
+            } 
+
+    }
+
+  }
 
 </script>
-<body>
-<p>
-<div id="userlist">
-<b>USERS</b>
-<div id="users"></div>
-</div>
-<div id="messages">
-<input id="data"/>
-<input type="button" id="datasend" class="send" value="send" />
-<div id="conversation"></div>
-</div>
-<div class="clear"></div>
-<div id="valve1001" class="valve">
-<h3>VALVE 1001</h3>
-<div class="open">OPEN</div>
-<div class="close">CLOSE</div>
-<div class="clear"></div>
-<div class="feedback">
-<div class="circle status green">
-<div class="circle command red"></div>
-</div>
-</div>
-<div class="clear"></div>
-</div>
-<div id="valve1002" class="valve">
-<h3>VALVE 1002</h3>
-<div class="open">OPEN</div>
-<div class="close">CLOSE</div>
-<div class="clear"></div>
-<div class="feedback">
-<div class="circle status green">
-<div class="circle command red"></div>
-</div>
-</div>
-<div class="clear"></div>
-</div>
-<div id="valve1003" class="valve">
-<h3>VALVE 1003</h3>
-<div class="open">OPEN</div>
-<div class="close">CLOSE</div>
-<div class="clear"></div>
-<div class="feedback">
-<div class="circle status green">
-<div class="circle command red"></div>
-</div>
-</div>
-<div class="clear"></div>
-</div>
-<div id="valve1004" class="valve">
-<h3>VALVE 1004</h3>
-<div class="open">OPEN</div>
-<div class="close">CLOSE</div>
-<div class="clear"></div>
-<div class="feedback">
-<div class="circle status green">
-<div class="circle command red"></div>
-</div>
-</div>
-<div class="clear"></div>
-</div>
 </body>
+</html>

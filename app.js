@@ -1,96 +1,129 @@
-var port = process.env.PORT || 8080;
-var ip   = process.env.IP || '127.0.0.1';
-var net = require('net');
 
-console.log( port + ',' + ip ) ;
+// Settings
+var db_user    = process.env.DB_USER     || 'root';
+var password   = process.env.DB_PASSWORD || '';
+var host       = process.env.DB_HOST     || 'localhost';
+var db_name    = process.env.APP_NAME    || 'mcv';
+var port       = process.env.PORT        || 3000;
+var table_name = 'users';
+var conn_user  = [];
+var msgs       = [];
 
-var server = net.createServer( function ( socket ) {
+// includes
+var app     = require( 'express' )( )
+  , express = require( 'express' )
+  , server  = require( 'http' ).createServer( app )
+  , io      = require( 'socket.io' ).listen( server );  
 
-		socket.write( port + ',' + ip + ' Echo server\r\n' );
-		socket.pipe( socket );
 
-});
-
+// connect through http
 server.listen( port );
 
-/*
-var app = require('express')()
-  , server = require('http').createServer(app)
-  , io = require('socket.io').listen(server);
+app.use( '/', express.static( __dirname + "/" ) );
 
-var port = process.env.PORT || 3000;
 
-server.listen(port);
-// server.listen(8080);
+app.get( '/', function ( req, res ) {  
 
-// routing
-app.get('/', function (req, res) {
-  res.sendfile(__dirname + '/index.html');  
+    res.sendfile( __dirname + '/index.html' );
+
 });
 
-app.get('/app.css', function (req, res) {
-  res.sendfile(__dirname + '/app.css');  
+app.post( '/', function ( req, res ){
+
+    res.sendfile( __dirname + '/index.html' );
+
 });
 
-app.post('/', function (req, res) {
-  res.sendfile(__dirname + '/index.html');  
+io.configure( function ( ) {
+
+    io.set( 'transports', [ 'flashsocket', 'xhr-polling', 'websocket' ] );
+
 });
 
-app.post('/app.css', function (req, res) {
-  res.sendfile(__dirname + '/app.css');  
+
+// Operation when a user is connected
+io.sockets.on( 'connection', function ( socket ) { 
+
+    var user = '';
+
+
+    // message pool for players
+    socket.on( 'message', function ( from, msg ) {
+
+        io.sockets.emit( 'message', { msg: user + ":add:" + user + "\n\n" } );
+
+        if( from == 'all' ) {
+
+            io.sockets.emit('message', { msg: user + ":" + msg.action + "\n\n" } );
+
+        } else if( from == 'them' ) {
+
+            socket.broadcast.emit('message', { msg: user + ":" + msg.action + "\n\n" } );
+
+        } else if( from == 'self' || from == '' ) {
+
+            socket.emit('message', { msg: user + ":" + msg.action + "\n\n" } );
+
+        } else {
+
+            socket.emit('message', from, { msg: user + ":" + msg.action + "\n\n" } );
+
+        }
+
+    });
+
+
+    // Add players
+    socket.on( 'logon', function( data ) {
+      
+        user = data.name;      
+        conn_user[ user ] = data.name;        
+        socket.emit( 'logon', { un: user } );
+
+        socket.set( 'username', user, function () {
+
+            io.sockets.emit( 'scores', { score: getUsers( ) } );
+            socket.emit( 'message', { msg: 'msg: Welcome ' + user + '! ' } );         
+            socket.broadcast.emit( 'message', { msg: 'msg: User is connected: ' + user + '.' } );          
+
+        });
+
+        console.log( getUsers( ) );
+
+    });
+
+
+    // Remove player from connected list
+    socket.on( 'disconnect', function( ) { 
+      
+      socket.get( 'username', function ( err, name ) {
+
+          delete conn_user[ name ];
+          io.sockets.emit( 'scores', { score: getUsers( ) } );
+          socket.broadcast.emit('message', { msg: 'msg: User is disconnected ' + name + '.' } );
+
+      });
+
+    });    
+
+    function getUsers( ) {
+
+        var text = '';
+
+        for( item in conn_user ) {
+
+            text += ',' + conn_user[ item ];
+
+        }
+
+        return text;
+
+    }
+
+    function SendToAll( ) {
+
+
+
+    }
+
 });
-
-// usernames which are currently connected to the chat
-var usernames = {};
-
-io.sockets.on('connection', function (socket) {
-
-// when the client emits 'sendchat', this listens and executes
-socket.on('sendchat', function (data) {
-// we tell the client to execute 'updatechat' with 2 parameters
-io.sockets.emit('updatechat', socket.username, data);
-});
-
-// when the client emits 'opencmd', this listens and executes
-socket.on('opencmd', function (data) {
-// Add calls to IO here
-io.sockets.emit('opencmd', socket.username, data);
-setTimeout(function () {
-  io.sockets.emit('openvalve', socket.username, data);
-}, 1000)
-});
-
-// when the client emits 'closecmd', this listens and executes
-socket.on('closecmd', function (data) {
-// Add calls to IO here
-io.sockets.emit('closecmd', socket.username, data);
-setTimeout(function () {
-  io.sockets.emit('closevalve', socket.username, data);
-}, 1000)
-});
-
-// when the client emits 'adduser', this listens and executes
-socket.on('adduser', function(username){
-// we store the username in the socket session for this client
-socket.username = username;
-// add the client's username to the global list
-usernames[username] = username;
-// echo to client they've connected
-socket.emit('updatechat', 'SERVER', 'you have connected');
-// echo globally (all clients) that a person has connected
-socket.broadcast.emit('updatechat', 'SERVER', username + ' has connected');
-// update the list of users in chat, client-side
-io.sockets.emit('updateusers', usernames);
-});
-
-// when the user disconnects.. perform this
-socket.on('disconnect', function(){
-// remove the username from global usernames list
-delete usernames[socket.username];
-// update list of users in chat, client-side
-io.sockets.emit('updateusers', usernames);
-// echo globally that this client has left
-socket.broadcast.emit('updatechat', 'SERVER', socket.username + ' has disconnected');
-});
-
-});*/
