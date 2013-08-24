@@ -156,6 +156,7 @@
     var chatbox     = []; // chat box  
     var blobangles  = []; // angle position of a blob
     var scoretip    = []; // scores container
+    var mb          = []; // simulate other player movements
 
 
     // Layers to add
@@ -605,10 +606,12 @@
 
     // Function for emitting spark
     function emitParticles() { 
-      for(var j = 0; j < particles.length; j++) {      
-        par = particles[j];
-        
+
         var ctx = BackgroundLayer.getContext();
+        BackgroundLayer.clear();
+
+        for(var j = 0; j < particles.length; j++) {      
+        par = particles[j];
 
         ctx.beginPath(); 
         ctx.fillStyle = "red";
@@ -618,19 +621,20 @@
 
         } else {
 
-            BackgroundLayer.clear();
+            particles.splice( 0, 1 );
 
         }
 
         ctx.fill();  
-        
+
         par.x += par.vx; 
         par.y += par.vy; 
-        
+
         // Reduce radius so that the particles die after a few seconds
         par.radius = Math.max(par.radius - 0.05, 0.0); 
-        
-      } 
+
+        }
+
     }
 
     function Enemy( options ) {
@@ -692,7 +696,8 @@
                 that.speedx = ( that.speedx + 0.01 ) * -1;
                 that.speedy = ( that.speedy + 0.01 ) * -1;
                 that.x = that.lastx;
-                that.y = that.lasty;                
+                that.y = that.lasty;
+                setParticles( that.x, that.y, 1 );                
 
             } else {                
 
@@ -878,6 +883,40 @@
 
     }
 
+    function moveBlob( n, x, y ) {
+
+        // if mouse is inside canvas
+        // move character to mouse position
+        if ( ( x < stage.getWidth( ) ) && ( y < stage.getHeight( ) ) ) {
+
+            if( blob[ n ].getX( ) > ( x + speed ) ) {
+
+                left( blob[ n ], speed );
+
+            }
+              
+            if( blob[ n ].getX( ) < ( x - speed ) ) {
+                
+                right( blob[n], speed );
+
+            }
+
+            if( blob[ n ].getY( ) > ( y + speed ) ) {
+
+                up( blob[n], speed );
+              
+            }
+
+            if( blob[ n ].getY( ) < ( y - speed ) ) {
+
+                down( blob[n], speed );
+
+            }
+
+        }
+
+    }
+
     var respawn = [];
 
     function gameOver( mchar ) {
@@ -927,6 +966,7 @@
     var time  = 0,
         timeDiff  = 0,
         frameRate = 0,
+        frameRate2 = 0,
         frps = 0;    
     
 
@@ -958,6 +998,11 @@
 
     // update score canvas
     var updatescore = new Kinetic.Animation( function (frame) { 
+
+            frameRate2++;
+            
+            // request data 
+            socket.emit( 'retrieve' );
 
     }, ScoreLayer );
 
@@ -1040,6 +1085,12 @@
 
         }
 
+        for( item in mb ) {
+
+            mb[ item ]();
+
+        }
+
         for( item in names ) {
 
             movechatbox( blob[ item ], item );
@@ -1085,23 +1136,25 @@
 
         }      
             
-        document.getElementById('debugcontainer').innerHTML = debug;
-
-        socket.emit( 'retrieve' );
+        document.getElementById('debugcontainer').innerHTML = debug;        
 
     }, AnimationLayer);
 
     anim.start();
     
     // reciever
-    var cp    = 0;
-    var pps   = 0
+    var cp    = 0,
+    pps   = 0,
+    frps2 = 0;
+
 
     setInterval( function() { 
             
             pps  = cp;
             frps = frameRate.toFixed( 2 );
+            frps2 = frameRate2;
             cp   = 0;
+            frameRate2 = 0;
 
     }, 1000 );
 
@@ -1114,7 +1167,7 @@
     function csend( target, action ) {  
       
             socket.emit( 'message', target, { action: action } );       
-            getres = 'FrameRate: ' + frps + '<br>Latency: ' + pps + 'ms <br>Last key pressed: ' + last_key; 
+            getres = 'FrameRate: ' + frps + '<br>FrameRate2: ' + frps2 + '<br>Latency: ' + pps + 'ms <br>Last key pressed: ' + last_key; 
             document.getElementById('messagecontainer').innerHTML = getres; 
 
     }
@@ -1148,14 +1201,14 @@
 
                     } else if( action == 'msg' ) {
 
-                    if( user != name ) { 
+                    // if( user != name ) { 
 
                             var cpos  = data.split( ";" );
                             var delay = ( new Date( ).getTime( ) - ( cpos[ 1 ] * 1 ) ) / 1000;
                             
                             showchatbox( cpos[ 0 ] + ' delay:' + delay, user );
 
-                    }
+                    // }
 
                     } else if ( action == 'add' ) {
 
@@ -1169,11 +1222,15 @@
 
                             if( user != name ) {  
 
+                                    // set players position
+                                    mb[ user ] = function() { 
+                                    
+                                        moveBlob( user, cpos[0] * 1, cpos[1] * 1 );
+                                    
+                                    };
 
-                                    // set players position         
-                                    blob[ user ].setX( cpos[0] * 1 );
-                                    blob[ user ].setY( cpos[1] * 1 );
                                     blob[ user ].setRotationDeg ( cpos[2] * 1 ); 
+
 
                             }
 
