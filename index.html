@@ -9,7 +9,7 @@
     <script type="text/javascript" src="./libraries/excanvas.js"></script>
   <![endif]-->
   <script type="text/javascript" src="./libraries/kinetic-v4.5.4.min.js"></script>
-  <script src="jquery.min.js"></script>
+  <script src="jquery.min.js"></script>  
   <script src="/socket.io/socket.io.js"></script>
   <script src="functions.js"></script>
   <style>
@@ -1165,7 +1165,9 @@
     // syntax: csend( target, text )
     // target can be "all", "playername", "them"    
     function csend( target, action ) {  
-      
+            
+            action = lzw_encode( action );
+
             socket.emit( 'message', target, { action: action } );       
             getres = 'FrameRate: ' + frps + '<br>FrameRate2: ' + frps2 + '<br>Latency: ' + pps + 'ms <br>Last key pressed: ' + last_key; 
             document.getElementById('messagecontainer').innerHTML = getres; 
@@ -1178,6 +1180,7 @@
 
             if( e == undefined ) return;
 
+            e = lzw_decode( e );
 
             // split message by Lines
             var lines = e.split( "\n\n" );
