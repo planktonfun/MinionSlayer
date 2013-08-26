@@ -1,4 +1,3 @@
-# Node Minion Vs Chacha
+# Red Dot
 
-Example that uses [Express](http://expressjs.com) framework to run a simple
-Node.js application.
+A mini MMO game using html5 and NodeJS
