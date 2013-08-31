@@ -4,7 +4,7 @@ var db_user    = process.env.DB_USER     || 'root';
 var password   = process.env.DB_PASSWORD || '';
 var host       = process.env.DB_HOST     || 'localhost';
 var db_name    = process.env.APP_NAME    || 'mcv';
-var port       = process.env.PORT        || 3000;
+var port       = process.env.PORT        || 5000;
 var table_name = 'users';
 var conn_user  = [];
 var msgs       = [];
@@ -12,10 +12,12 @@ var sendrates  = [];
 var srps  = [];
 
 // includes
-var app     = require( 'express' )( )
-  , express = require( 'express' )
-  , server  = require( 'http' ).createServer( app )
-  , io      = require( 'socket.io' ).listen( server );
+var express = require( 'express' )
+    , http  = require( 'http' )
+    , sio   = require( 'socket.io' )
+    , app    = express( )
+    , server = http.createServer( app )
+    , io     = sio.listen( server );
 
 
 // connect through http
@@ -38,7 +40,10 @@ app.post( '/', function ( req, res ){
 
 io.configure( function ( ) {
 
-    io.set( 'transports', [ 'flashsocket', 'xhr-polling', 'websocket' ] );
+    // io.set( 'transports', [ 'flashsocket', 'xhr-polling', 'websocket' ] );
+
+    // Restrict log output
+    io.set("log level", 2);
 
 });
 
