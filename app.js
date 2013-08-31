@@ -89,28 +89,27 @@ io.sockets.on( 'connection', function ( socket ) {
 
         msg.action = lzw_decode( msg.action );
 
-        // io.sockets.emit( 'retrieve', { msg: user + ":add:" + user + "\n\n" } );
-        SendToAll( user + ":add:" + user + "\n\n" );
+        io.sockets.emit( 'retrieve', { msg: user + ":add:" + user + "\n\n" } );
 
         if( from == 'all' ) {
 
-            SendToAll( user + ":" + msg.action + "\n\n" );
-            // io.sockets.emit('retrieve', { msg: user + ":" + msg.action + "\n\n" } );
+            // SendToAll( user + ":" + msg.action + "\n\n" );
+            io.sockets.emit('retrieve', { msg: user + ":" + msg.action + "\n\n" } );
 
         } else if( from == 'them' ) {
 
-            SendToThem( user + ":" + msg.action + "\n\n" );
-            // socket.broadcast.emit('retrieve', { msg: user + ":" + msg.action + "\n\n" } );
+            // SendToThem( user + ":" + msg.action + "\n\n" );
+            socket.broadcast.emit('retrieve', { msg: user + ":" + msg.action + "\n\n" } );
 
         } else if( from == 'self' || from == '' ) {
 
-            SendToSelf( user + ":" + msg.action + "\n\n" );
-            // socket.emit('retrieve', { msg: user + ":" + msg.action + "\n\n" } );
+            // SendToSelf( user + ":" + msg.action + "\n\n" );
+            socket.emit('retrieve', { msg: user + ":" + msg.action + "\n\n" } );
 
         } else {
 
-            SendToTarget( user + ":" + msg.action + "\n\n", from );
-            // socket.emit('retrieve', from, { msg: user + ":" + msg.action + "\n\n" } );
+            // SendToTarget( user + ":" + msg.action + "\n\n", from );
+            socket.emit('retrieve', from, { msg: user + ":" + msg.action + "\n\n" } );
 
         }
 
@@ -124,7 +123,7 @@ io.sockets.on( 'connection', function ( socket ) {
 
             sendrates[ user ]++;
 
-            getMsgs( user );
+            // getMsgs( user );
 
     });
 
@@ -159,6 +158,8 @@ io.sockets.on( 'connection', function ( socket ) {
       socket.get( 'username', function ( err, name ) {
 
           delete conn_user[ name ];
+          delete msgs[ name ];
+
           io.sockets.emit( 'scores', { score: getUsers( ) } );
           socket.broadcast.emit('message', { msg: 'msg: User is disconnected ' + name + '.' } );
 
