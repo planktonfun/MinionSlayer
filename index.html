@@ -90,8 +90,26 @@
   
   window.onload = function() {
 
-    // var person = prompt( "Please enter your name", "Jhonny Depp" + Math.random( ) );
-    var person = "Jhonny Depp" + Math.random( );
+    // check if session supported
+    if(typeof(Storage)!=="undefined")
+    {
+        if( localStorage.lastname ) {
+            
+            var person = localStorage.lastname;
+
+        } else {
+        
+            var person = prompt( "Please enter your name", '' );
+
+        }
+
+    }
+    else
+    {
+        var person = prompt( "Please enter your name", '' );
+
+    }
+    // var person = "Jhonny Depp" + Math.random( );
 
     if ( person != null ) {
 
@@ -111,6 +129,7 @@
 
     socket.on( 'logon', function( e ) {
 
+        localStorage.lastname = e.un;
         name = e.un;
         loadall( );
 
