@@ -43,7 +43,7 @@ io.configure( function ( ) {
     // io.set( 'transports', [ 'flashsocket', 'xhr-polling', 'websocket' ] );
 
     // Restrict log output
-    io.set("log level", 2);
+    // io.set("log level", 2);
 
 });
 

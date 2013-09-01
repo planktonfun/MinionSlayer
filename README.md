@@ -1,3 +1,4 @@
-# Red Dot
+# Node Minion Vs Chacha
 
-A mini MMO game using html5 and NodeJS
+Example that uses [Express](http://expressjs.com) framework to run a simple
+Node.js application.

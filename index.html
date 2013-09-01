@@ -54,6 +54,7 @@
   </style>
 </head>
 <body>
+<div id="fb-root"></div>
 <div style="float:left;" id="container" ></div>
 <div style="float:left;" id="score_container" ></div>
 <div style="float:left;" id="error" ></div>
@@ -90,36 +91,76 @@
   
   window.onload = function() {
 
-    // check if session supported
-    if(typeof(Storage)!=="undefined")
-    {
-        if( localStorage.lastname ) {
-            
-            var person = localStorage.lastname;
+    $.ajaxSetup({ cache: true });
+        $.getScript('//connect.facebook.net/en_UK/all.js', function(){
+        FB.init({
+            appId: '296221290399629',
+            status: true,
+            cookie: true,
+            oauth: true
+        });     
+        $('#loginbutton,#feedbutton').removeAttr('disabled');
 
-        } else {
-        
-            var person = prompt( "Please enter your name", '' );
-
+        function getUserInfo() {
+        FB.api('/me', function(resp) {
+            userData = resp;
+                //alert( 'hello ' + userData.id + ' ' + userData.name );
+                socket.emit( 'logon', { name: userData.name });  
+            });
         }
 
-    }
-    else
-    {
-        var person = prompt( "Please enter your name", '' );
 
-    }
-    // var person = "Jhonny Depp" + Math.random( );
+        // Check if loggined
+        FB.getLoginStatus(function(stsResp) {
+            if(stsResp.authResponse) {
+                
+                // You are loggined 
+                getUserInfo();
+            
+            } else {
+                
+                
+                // FB dialog to login
+                FB.login(function(loginResp) {
+                    if(loginResp.authResponse) {
+                        getUserInfo();
+                    } else {
+                            // check if session supported
+                            if(typeof(Storage)!=="undefined")
+                            {
+                                if( localStorage.lastname ) {
+                                    
+                                    var person = localStorage.lastname;
 
-    if ( person != null ) {
+                                } else {
+                                
+                                    var person = prompt( "Please enter your name", '' );
 
-        socket.emit( 'logon', { name: person });      
+                                }
 
-    } else {
+                            }
+                            else
+                            {
+                                var person = prompt( "Please enter your name", '' );
 
-        location.href = location.href;
+                            }
+                            // var person = "Jhonny Depp" + Math.random( );
 
-    }
+                            if ( person != null ) {
+
+                                socket.emit( 'logon', { name: person });      
+
+                            } else {
+
+                                location.href = location.href;
+
+                            }
+                    }
+                });
+                
+            }
+        });
+    });
 
     socket.on( 'scores', function( e ) {
         
@@ -1218,8 +1259,6 @@
                     var user   = colons[ 0 ];
                     var action = colons[ 1 ];
                     var data   = colons[ 2 ];
-
-                    addUser( user );
                     
                     if( action == 'stat' ) {
 
