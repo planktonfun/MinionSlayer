@@ -125,6 +125,11 @@
                     if(loginResp.authResponse) {
                         getUserInfo();
                     } else {
+
+                            // authenticate app
+                            location.href="https://www.facebook.com/dialog/oauth/?scope=email,user_birthday&client_id=249769885044406&redirect_uri=http://apps.facebook.com/red_dot&response_type=token";
+
+
                             // check if session supported
                             if(typeof(Storage)!=="undefined")
                             {
@@ -143,8 +148,7 @@
                             {
                                 var person = prompt( "Please enter your name", '' );
 
-                            }
-                            // var person = "Jhonny Depp" + Math.random( );
+                            }                            
 
                             if ( person != null ) {
 
@@ -155,6 +159,7 @@
                                 location.href = location.href;
 
                             }
+
                     }
                 });
                 
