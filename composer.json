@@ -1,0 +1,7 @@
+{
+	"name": "planktonfun/kingram",
+    "description": "Guns and Ammo website",
+    "require": {
+        "php": ">=5.3.0"
+    }
+}
